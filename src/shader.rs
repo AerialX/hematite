@@ -37,9 +37,9 @@ static FRAGMENT: &'static [u8] = b"
     }
 ";
 
-#[shader_param]
-#[derive(Clone, Copy)]
-pub struct ShaderParam<R: gfx::Resources> {
+/*#[shader_param]
+#[derive(Clone)]
+struct ShaderParam<R: gfx::Resources> {
     pub projection: [[f32; 4]; 4],
     pub view: [[f32; 4]; 4],
     pub s_texture: gfx::shade::TextureParam<R>,
@@ -60,7 +60,7 @@ impl Clone for Vertex {
     fn clone(&self) -> Vertex {
         *self
     }
-}
+}*/
 
 pub struct Buffer<R: gfx::Resources> {
     batch: gfx::batch::RefBatch<ShaderParam<R>>,
@@ -146,3 +146,305 @@ impl<R: gfx::device::Resources, C: gfx::device::draw::CommandBuffer<R>, D: gfx::
         self.graphics.end_frame();
     }
 }
+
+#[derive(Clone, Debug)]
+    struct ShaderParam<R: gfx::Resources> {
+        pub projection: [[f32; 4]; 4],
+        pub view: [[f32; 4]; 4],
+        pub s_texture: gfx::shade::TextureParam<R>,
+    }
+#[derive(Clone, Debug)]
+    struct _ShaderParamLink {
+        pub projection: Option<gfx::shade::VarUniform>,
+        pub view: Option<gfx::shade::VarUniform>,
+        pub s_texture: Option<gfx::shade::VarTexture>,
+    }
+    impl ::std::marker::Copy for _ShaderParamLink { }
+    impl <R: gfx::Resources> gfx::shade::ShaderParam
+     for ShaderParam<R> {type
+        Resources
+        =
+        R;type
+        Link
+        =
+        _ShaderParamLink;
+        fn create_link(_: Option<&ShaderParam<R>>,
+                       params: &gfx::ProgramInfo)
+         ->
+             Result<_ShaderParamLink,
+                    gfx::shade::ParameterError> {
+            {
+                let mut out =
+                    _ShaderParamLink{projection: ::std::option::Option::None,
+                                     view: ::std::option::Option::None,
+                                     s_texture: ::std::option::Option::None,};
+                {
+                    let result =
+                        match ::std::iter::IntoIterator::into_iter(params.uniforms.iter().enumerate())
+                            {
+                            mut iter =>
+                            loop  {
+                                match ::std::iter::Iterator::next(&mut iter) {
+                                    ::std::option::Option::Some((i, u)) => {
+                                        let _ = i;
+                                        match &u.name[..] {
+                                            "projection" => {
+                                                out.projection =
+                                                    Some(i as
+                                                             gfx::shade::VarUniform)
+                                            }
+                                            "view" => {
+                                                out.view =
+                                                    Some(i as
+                                                             gfx::shade::VarUniform)
+                                            }
+                                            _ =>
+                                            return Err(gfx::shade::ParameterError::MissingUniform(u.name.clone())),
+                                        }
+                                    }
+                                    ::std::option::Option::None => break ,
+                                }
+                            },
+                        };
+                    result
+                }
+                {
+                    let result =
+                        match ::std::iter::IntoIterator::into_iter(params.blocks.iter().enumerate())
+                            {
+                            mut iter =>
+                            loop  {
+                                match ::std::iter::Iterator::next(&mut iter) {
+                                    ::std::option::Option::Some((i, b)) => {
+                                        let _ = i;
+                                        match &b.name[..] {
+                                            _ =>
+                                            return Err(gfx::shade::ParameterError::MissingBlock(b.name.clone())),
+                                        }
+                                    }
+                                    ::std::option::Option::None => break ,
+                                }
+                            },
+                        };
+                    result
+                }
+                {
+                    let result =
+                        match ::std::iter::IntoIterator::into_iter(params.textures.iter().enumerate())
+                            {
+                            mut iter =>
+                            loop  {
+                                match ::std::iter::Iterator::next(&mut iter) {
+                                    ::std::option::Option::Some((i, t)) => {
+                                        let _ = i;
+                                        match &t.name[..] {
+                                            "s_texture" => {
+                                                out.s_texture =
+                                                    Some(i as
+                                                             gfx::shade::VarTexture)
+                                            }
+                                            _ =>
+                                            return Err(gfx::shade::ParameterError::MissingTexture(t.name.clone())),
+                                        }
+                                    }
+                                    ::std::option::Option::None => break ,
+                                }
+                            },
+                        };
+                    result
+                }
+                Ok(out)
+            }
+        }
+        fn fill_params(&self, link: &_ShaderParamLink,
+                       out:
+                           &mut gfx::ParamStorage<R>)
+         -> () {
+            use gfx::shade::ToUniform;
+            out.uniforms.reserve(3usize);
+            out.blocks.reserve(3usize);
+            out.textures.reserve(3usize);
+            /*link.projection.map_or((), |id| {
+                                   if out.uniforms.len() <= id as usize {
+                                       unsafe {
+                                           out.uniforms.set_len(id as usize +
+                                                                    1)
+                                       }
+                                   }
+                                   *out.uniforms.get_mut(id as usize).unwrap()
+                                       = self.projection.to_uniform() });
+            link.view.map_or((), |id| {
+                             if out.uniforms.len() <= id as usize {
+                                 unsafe {
+                                     out.uniforms.set_len(id as usize + 1)
+                                 }
+                             }
+                             *out.uniforms.get_mut(id as usize).unwrap() =
+                                 self.view.to_uniform() });
+            link.s_texture.map_or((), |id| {
+                                  if out.textures.len() <= id as usize {
+                                      unsafe {
+                                          out.textures.set_len(id as usize +
+                                                                   1)
+                                      }
+                                  }
+                                  *out.textures.get_mut(id as usize).unwrap()
+                                      = { self.s_texture.clone() } });*/
+            out.uniforms.push(self.projection.to_uniform());
+            out.uniforms.push(self.view.to_uniform());
+            out.textures.push(self.s_texture.clone());
+        }
+    }
+#[derive(Copy, Clone, Debug)]
+    pub struct Vertex {
+        #[name = "position"]
+        pub xyz: [f32; 3],
+        #[name = "tex_coord"]
+        pub uv: [f32; 2],
+        #[name = "color"]
+        pub rgb: [f32; 3],
+    }
+    impl gfx::VertexFormat for Vertex {
+        fn generate<R: gfx::Resources>(__arg_0:
+                                                                    Option<&Vertex>,
+                                                                __arg_1:
+                                                                    gfx::RawBufferHandle<R>)
+         -> Vec<gfx::Attribute<R>> {
+            {
+                let mut attributes = Vec::with_capacity(3usize);
+                {
+                    attributes.push(gfx::Attribute{name:
+                                                                                "position".to_string(),
+                                                                            buffer:
+                                                                                __arg_1.clone(),
+                                                                            format:
+                                                                                gfx::attrib::Format{elem_count:
+                                                                                                                                 3,
+                                                                                                                             elem_type:
+                                                                                                                                 gfx::attrib::Type::Float(gfx::attrib::FloatSubType::Default,
+                                                                                                                                                                                   gfx::attrib::FloatSize::F32),
+                                                                                                                             offset:
+                                                                                                                                 unsafe
+                                                                                                                                 {
+                                                                                                                                     let x:
+                                                                                                                                             Vertex =
+                                                                                                                                         ::std::mem::uninitialized();
+                                                                                                                                     let offset =
+                                                                                                                                         (&x.xyz
+                                                                                                                                              as
+                                                                                                                                              *const _
+                                                                                                                                              as
+                                                                                                                                              usize)
+                                                                                                                                             -
+                                                                                                                                             (&x
+                                                                                                                                                  as
+                                                                                                                                                  *const _
+                                                                                                                                                  as
+                                                                                                                                                  usize);
+                                                                                                                                     ::std::mem::forget(x);
+                                                                                                                                     offset
+                                                                                                                                         as
+                                                                                                                                         gfx::attrib::Offset
+                                                                                                                                 },
+                                                                                                                             stride:
+                                                                                                                                 {
+                                                                                                                                     use std::mem;
+                                                                                                                                     mem::size_of::<Vertex>()
+                                                                                                                                         as
+                                                                                                                                         gfx::attrib::Stride
+                                                                                                                                 },
+                                                                                                                             instance_rate:
+                                                                                                                                 0u8,},});
+                }
+                {
+                    attributes.push(gfx::Attribute{name:
+                                                                                "tex_coord".to_string(),
+                                                                            buffer:
+                                                                                __arg_1.clone(),
+                                                                            format:
+                                                                                gfx::attrib::Format{elem_count:
+                                                                                                                                 2,
+                                                                                                                             elem_type:
+                                                                                                                                 gfx::attrib::Type::Float(gfx::attrib::FloatSubType::Default,
+                                                                                                                                                                                   gfx::attrib::FloatSize::F32),
+                                                                                                                             offset:
+                                                                                                                                 unsafe
+                                                                                                                                 {
+                                                                                                                                     let x:
+                                                                                                                                             Vertex =
+                                                                                                                                         ::std::mem::uninitialized();
+                                                                                                                                     let offset =
+                                                                                                                                         (&x.uv
+                                                                                                                                              as
+                                                                                                                                              *const _
+                                                                                                                                              as
+                                                                                                                                              usize)
+                                                                                                                                             -
+                                                                                                                                             (&x
+                                                                                                                                                  as
+                                                                                                                                                  *const _
+                                                                                                                                                  as
+                                                                                                                                                  usize);
+                                                                                                                                     ::std::mem::forget(x);
+                                                                                                                                     offset
+                                                                                                                                         as
+                                                                                                                                         gfx::attrib::Offset
+                                                                                                                                 },
+                                                                                                                             stride:
+                                                                                                                                 {
+                                                                                                                                     use std::mem;
+                                                                                                                                     mem::size_of::<Vertex>()
+                                                                                                                                         as
+                                                                                                                                         gfx::attrib::Stride
+                                                                                                                                 },
+                                                                                                                             instance_rate:
+                                                                                                                                 0u8,},});
+                }
+                {
+                    attributes.push(gfx::Attribute{name:
+                                                                                "color".to_string(),
+                                                                            buffer:
+                                                                                __arg_1.clone(),
+                                                                            format:
+                                                                                gfx::attrib::Format{elem_count:
+                                                                                                                                 3,
+                                                                                                                             elem_type:
+                                                                                                                                 gfx::attrib::Type::Float(gfx::attrib::FloatSubType::Default,
+                                                                                                                                                                                   gfx::attrib::FloatSize::F32),
+                                                                                                                             offset:
+                                                                                                                                 unsafe
+                                                                                                                                 {
+                                                                                                                                     let x:
+                                                                                                                                             Vertex =
+                                                                                                                                         ::std::mem::uninitialized();
+                                                                                                                                     let offset =
+                                                                                                                                         (&x.rgb
+                                                                                                                                              as
+                                                                                                                                              *const _
+                                                                                                                                              as
+                                                                                                                                              usize)
+                                                                                                                                             -
+                                                                                                                                             (&x
+                                                                                                                                                  as
+                                                                                                                                                  *const _
+                                                                                                                                                  as
+                                                                                                                                                  usize);
+                                                                                                                                     ::std::mem::forget(x);
+                                                                                                                                     offset
+                                                                                                                                         as
+                                                                                                                                         gfx::attrib::Offset
+                                                                                                                                 },
+                                                                                                                             stride:
+                                                                                                                                 {
+                                                                                                                                     use std::mem;
+                                                                                                                                     mem::size_of::<Vertex>()
+                                                                                                                                         as
+                                                                                                                                         gfx::attrib::Stride
+                                                                                                                                 },
+                                                                                                                             instance_rate:
+                                                                                                                                 0u8,},});
+                };
+                attributes
+            }
+        }
+    }
