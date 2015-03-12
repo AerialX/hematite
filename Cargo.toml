@@ -58,6 +58,9 @@ git = "https://github.com/gfx-rs/gfx-rs"
 [dependencies.gfx_macros]
 git = "https://github.com/gfx-rs/gfx_macros"
 
+[dependencies.draw_state]
+git = "https://github.com/gfx-rs/draw_state"
+
 [dependencies.gfx_device_gl]
 git = "https://github.com/gfx-rs/gfx_device_gl"
 

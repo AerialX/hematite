@@ -9,6 +9,7 @@ extern crate fps_counter;
 extern crate gfx;
 extern crate gfx_device_gl;
 extern crate gfx_voxel;
+extern crate draw_state;
 extern crate image;
 extern crate input;
 extern crate quack;
@@ -112,7 +113,7 @@ fn main() {
     // Load block state definitions and models.
     let block_states = BlockStates::load(&assets, &mut device);
 
-    let mut renderer = Renderer::new(device, frame, block_states.texture().handle);
+    let mut renderer = Renderer::new(device, frame, block_states.texture().handle.clone());
 
     let mut chunk_manager = chunk::ChunkManager::new();
 
@@ -201,7 +202,7 @@ fn main() {
                 let mut num_total_chunks: usize = 0;
                 let start_time = time::precise_time_ns();
                 chunk_manager.each_chunk(|cx, cy, cz, _, buffer| {
-                    match buffer {
+                    match buffer.borrow_mut().as_mut() {
                         Some(buffer) => {
                             num_total_chunks += 1;
 
@@ -281,17 +282,13 @@ fn main() {
                 });
                 match pending {
                     Some((coords, buffer, chunks, column_biomes)) => {
-                        match buffer.get() {
-                            Some(buffer) => renderer.delete_buffer(buffer),
-                            None => {}
-                        }
                         minecraft::block_state::fill_buffer(
                             &block_states, &biomes, &mut staging_buffer,
                             coords, chunks, column_biomes
                         );
-                        buffer.set(Some(
+                        *buffer.borrow_mut() = Some(
                             renderer.create_buffer(staging_buffer.as_slice())
-                        ));
+                        );
                         staging_buffer.clear();
 
                         if pending_chunks.is_empty() {
